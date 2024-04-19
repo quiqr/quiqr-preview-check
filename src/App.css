@@ -13,8 +13,8 @@ body {
 .app-sidebar {
   flex-grow: 0;
   flex-shrink: 0;
-  min-width: 150px;
-  max-width: 300px;
+  min-width: 350px;
+  max-width: 450px;
   display: flex;
   border-right: #e9e9e9 1px solid;
   flex-direction: row;
@@ -35,6 +35,11 @@ body {
   //box-shadow: 8px 2px 32px -2px rgba(0, 0, 0, 0.25);
   //border-radius: 0px 10px 10px 0px;
   z-index: 1;
+}
+.app-frame iframe {
+  height: 100vh;
+  width: 100%;
+  border: 0;
 }
 
 .app-sidebar .app-sidebar-content {
