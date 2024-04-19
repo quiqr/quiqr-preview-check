@@ -1,5 +1,6 @@
 import * as React from 'react';
 import Typography from '@mui/material/Typography';
+import Button from '@mui/material/Button';
 import Box from '@mui/material/Box';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
@@ -64,13 +65,22 @@ function TabsSidePanel(){
 
       <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
         <Tabs value={value} onChange={handleChange} aria-label="basic tabs example">
-          <Tab label="Item One" {...a11yProps(0)} />
+          <Tab label="Meta Tags" {...a11yProps(0)} />
           <Tab label="Item Two" {...a11yProps(1)} />
           <Tab label="Item Three" {...a11yProps(2)} />
         </Tabs>
       </Box>
       <CustomTabPanel value={value} index={0}>
-        Item One
+
+        <Button
+          onClick={() => {
+            alert('clicked');
+            fetchMetaTags();
+          }}
+        >
+          Fetch Meta Tags
+        </Button>
+
       </CustomTabPanel>
       <CustomTabPanel value={value} index={1}>
         Item Two
@@ -81,8 +91,16 @@ function TabsSidePanel(){
     </React.Fragment>
   )
 
+}
 
-
+function fetchMetaTags(){
+  fetch("http://localhost:13131")
+    .then((response) => response.text())
+    .then((html) => {
+       const matches = html.match(/<title>(.*?)<\/title>/);
+      console.log(matches);
+    })
+    .catch((error:any) => { console.warn(error); });
 }
 
 function App() {
