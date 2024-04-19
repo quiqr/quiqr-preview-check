@@ -1,12 +1,10 @@
 import * as React from 'react';
-import Container from '@mui/material/Container';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
-import Link from '@mui/material/Link';
-import ProTip from './ProTip';
-import { useState, useEffect, useRef } from "react";
+import IframeResizer from 'iframe-resizer-react'
+import { useState, useRef } from "react";
 
 import "./App.css";
 
@@ -91,20 +89,21 @@ function App() {
   const sidebarRef = useRef<HTMLInputElement>(null);
   const [isResizing, setIsResizing] = useState(false);
   const [sidebarWidth, setSidebarWidth] = useState(350);
+  const [resizeDisplay, setResizeDisplay] = useState("none");
 
   const startResizing = React.useCallback((mouseDownEvent:any) => {
     setIsResizing(true);
+    setResizeDisplay("inline-block");
   }, []);
 
   const stopResizing = React.useCallback(() => {
     setIsResizing(false);
+    setResizeDisplay("none");
   }, []);
 
   const resize = React.useCallback(
 
     (mouseMoveEvent:any) => {
-
-      const newWidth: number = window.screen.width - mouseMoveEvent.clientX - ( sidebarRef?.current?.getBoundingClientRect().right ? sidebarRef?.current?.getBoundingClientRect().right: 0 )
 
       if (isResizing) {
         setSidebarWidth(
@@ -128,6 +127,11 @@ function App() {
     <div className="app-container">
 
       <div className="app-frame">
+        <IframeResizer
+          log
+          src="http://localhost:13131"
+          scrolling={true}
+        />
       </div>
 
       <div
@@ -136,7 +140,9 @@ function App() {
         style={{ width: sidebarWidth }}
         onMouseDown={(e) => e.preventDefault()}
       >
-        <div className="app-sidebar-resizer" onMouseDown={startResizing} />
+        <div className="app-sidebar-resizer" onMouseDown={startResizing} >
+          <div className="resize-panel" style={{ display: resizeDisplay }}></div>
+        </div>
         <div className="app-sidebar-content">
           <TabsSidePanel />
           <Copyright />
