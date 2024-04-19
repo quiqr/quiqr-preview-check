@@ -47,10 +47,7 @@ function a11yProps(index: number) {
 function Copyright() {
   return (
     <Typography variant="body2" color="text.secondary" align="center">
-      {'Copyright © '}
-      <Link color="inherit" href="https://mui.com/">
-        Your Website
-      </Link>{' '}
+      {'Copyright © Quiqr '}
       {new Date().getFullYear()}.
     </Typography>
   );
@@ -91,11 +88,9 @@ function TabsSidePanel(){
 }
 
 function App() {
-
-
-  const sidebarRef = useRef(null);
+  const sidebarRef = useRef<HTMLInputElement>(null);
   const [isResizing, setIsResizing] = useState(false);
-  const [sidebarWidth, setSidebarWidth] = useState(268);
+  const [sidebarWidth, setSidebarWidth] = useState(350);
 
   const startResizing = React.useCallback((mouseDownEvent:any) => {
     setIsResizing(true);
@@ -106,11 +101,14 @@ function App() {
   }, []);
 
   const resize = React.useCallback(
+
     (mouseMoveEvent:any) => {
+
+      const newWidth: number = window.screen.width - mouseMoveEvent.clientX - ( sidebarRef?.current?.getBoundingClientRect().right ? sidebarRef?.current?.getBoundingClientRect().right: 0 )
+
       if (isResizing) {
         setSidebarWidth(
-          mouseMoveEvent.clientX -
-            sidebarRef.current.getBoundingClientRect().left
+          window.innerWidth - mouseMoveEvent.clientX
         );
       }
     },
@@ -128,34 +126,27 @@ function App() {
 
   return (
     <div className="app-container">
+
+      <div className="app-frame">
+      </div>
+
       <div
         ref={sidebarRef}
         className="app-sidebar"
         style={{ width: sidebarWidth }}
         onMouseDown={(e) => e.preventDefault()}
       >
-        <div className="app-sidebar-content">
-        </div>
         <div className="app-sidebar-resizer" onMouseDown={startResizing} />
+        <div className="app-sidebar-content">
+          <TabsSidePanel />
+          <Copyright />
+        </div>
+
       </div>
-      <div className="app-frame">
-      </div>
+
+
     </div>
   );
 }
 
 export default App;
-
-function App2() {
-  return (
-    <Container maxWidth="sm">
-      <Box sx={{ my: 4 }}>
-        <Typography variant="h4" component="h1" sx={{ mb: 2 }}>
-          Material UI Create React App example in TypeScript
-        </Typography>
-        <ProTip />
-        <Copyright />
-      </Box>
-    </Container>
-  );
-}
