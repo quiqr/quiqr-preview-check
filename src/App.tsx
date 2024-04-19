@@ -74,7 +74,6 @@ function TabsSidePanel(){
 
         <Button
           onClick={() => {
-            alert('clicked');
             fetchMetaTags();
           }}
         >

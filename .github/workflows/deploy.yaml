@@ -10,6 +10,8 @@ permissions:
 
 jobs:
   deploy:
+    env:
+      PUBLIC_URL: /quiqr-preview-check
     runs-on: ubuntu-latest
     steps:
     - id: build-publish
