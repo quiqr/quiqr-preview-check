@@ -2,13 +2,23 @@ import * as React from 'react';
 
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
-import Button from '@mui/material/Button';
+//import Button from '@mui/material/Button';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 import CardMedia from '@mui/material/CardMedia';
-import fetchMeta from 'fetch-meta-tags'
+//import fetchMeta from 'fetch-meta-tags'
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
+
+import Accordion from '@mui/material/Accordion';
+//import AccordionActions from '@mui/material/AccordionActions';
+import AccordionSummary from '@mui/material/AccordionSummary';
+import AccordionDetails from '@mui/material/AccordionDetails';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+
+import WarningIcon from '@mui/icons-material/Warning';
+import CheckIcon from '@mui/icons-material/Check';
+import ErrorIcon from '@mui/icons-material/Error';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -43,9 +53,12 @@ class CustomTabPanel extends React.Component <any, any> {
 }
 type MyProps = { url: string};
 type MyState = {
+  url: string,
   value: number,
   headTitleValue: string,
-  metaDescriptionValue: string
+  metaDescriptionValue: string,
+  metaKeywordsValue: string,
+  twitterImage: string,
 };
 
 export default class SidePanel extends React.Component <MyProps, MyState> {
@@ -54,19 +67,27 @@ export default class SidePanel extends React.Component <MyProps, MyState> {
     super(props);
     this.state = {
       value: 0,
+      url: "",
       headTitleValue: "",
       metaDescriptionValue: "",
+      metaKeywordsValue: "",
+      twitterImage: "",
     };
   }
-  componentDidMount(){
-    this.fetchMetaTags();
+
+  componentDidUpdate(){
+    if (this.state.url !== this.props.url) {
+      this.setState({ url: this.props.url });
+      console.log(this.props.url)
+      this.fetchMetaTags();
+    }
   }
 
-  getMeta(htmlDoc: any, metaName:string) {
+  getMeta(htmlDoc: any, metaName:string, attribute:string='name') {
     const metas = htmlDoc.getElementsByTagName('meta');
 
     for (let i = 0; i < metas.length; i++) {
-      if (metas[i].getAttribute('name') === metaName) {
+      if (metas[i].getAttribute(attribute) === metaName) {
         return metas[i].getAttribute('content');
       }
     }
@@ -82,23 +103,44 @@ export default class SidePanel extends React.Component <MyProps, MyState> {
 
     let title = htmlDoc.getElementsByTagName("title")[0].innerHTML;
     let description = this.getMeta(htmlDoc, 'description');
+    let keywords = this.getMeta(htmlDoc, 'keywords');
+
+    let twitterCard = this.getMeta(htmlDoc, 'twitter:card');
+    let twitterTitle = this.getMeta(htmlDoc, 'twitter:title');
+    let twitterDescription = this.getMeta(htmlDoc, 'twitter:description');
+    let twitterImage = this.getMeta(htmlDoc, 'twitter:image');
+
+    let ogType = this.getMeta(htmlDoc, 'og:type', 'property');
+    let ogTitle = this.getMeta(htmlDoc, 'og:title', 'property');
+    let ogDescription = this.getMeta(htmlDoc, 'og:description', 'property');
+    let ogUrl = this.getMeta(htmlDoc, 'og:url', 'property');
+    let ogImage = this.getMeta(htmlDoc, 'og:image', 'property');
+    let ogLogo = this.getMeta(htmlDoc, 'og:logo', 'property');
+
+    let itempropName = this.getMeta(htmlDoc, 'name', 'itemprop');
+    let itempropImage = this.getMeta(htmlDoc, 'image', 'itemprop');
+    let itempropDescription = this.getMeta(htmlDoc, 'description', 'itemprop');
+
     console.log(title);
     console.log(description);
 
     this.setState({headTitleValue: title});
     this.setState({metaDescriptionValue: description});
+    this.setState({metaKeywordsValue: keywords});
+    this.setState({twitterImage: twitterImage});
   }
 
- fetchMetaTags(){
-  //const [headTitleValue, setHeadTitleValue] = useState("");
+  fetchMetaTags(){
+    //const [headTitleValue, setHeadTitleValue] = useState("");
+    console.log(this.props.url)
 
-    fetch("http://localhost:13131")
-    .then((response) => response.text())
-    .then((html) => {
+    fetch(this.props.url)
+      .then((response) => response.text())
+      .then((html) => {
         this.parseHTML(html)
-    })
-    .catch((error:any) => { console.warn(error); });
-}
+      })
+      .catch((error:any) => { console.warn(error); });
+  }
 
   a11yProps(index: number) {
     return {
@@ -118,12 +160,17 @@ export default class SidePanel extends React.Component <MyProps, MyState> {
         <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
           <Tabs value={this.state.value} onChange={handleChange} aria-label="basic tabs example">
             <Tab label="Overview" {...this.a11yProps(0)} />
-            <Tab label="Keywords" {...this.a11yProps(1)} />
-            <Tab label="Meta Tags" {...this.a11yProps(2)} />
+            {/*<Tab label="Keywords" {...this.a11yProps(1)} />
+            <Tab label="Meta Tags" {...this.a11yProps(2)} />*/}
           </Tabs>
         </Box>
         <CustomTabPanel value={this.state.value} index={0}>
 
+          <Typography variant="overline" display="block" gutterBottom>
+           Preview
+          </Typography>
+
+          {/*
           <Button
             onClick={() => {
               this.fetchMetaTags();
@@ -131,12 +178,13 @@ export default class SidePanel extends React.Component <MyProps, MyState> {
           >
             Fetch Meta Tags
           </Button>
+          */}
 
           <Card sx={{ display: 'flex', height: 151}}>
             <CardMedia
               component="img"
               sx={{ width: 151 }}
-              image="http://localhost:13131/unleash.jpg"
+              image={this.state.twitterImage}
               alt="Live from space album cover"
             />
             <Box sx={{ display: 'flex', flexDirection: 'column' }}>
@@ -151,15 +199,64 @@ export default class SidePanel extends React.Component <MyProps, MyState> {
               <Box sx={{ display: 'flex', alignItems: 'center', pl: 1, pb: 1 }}>
               </Box>
             </Box>
-
           </Card>
+
+          <div>
+
+            <Box sx={{ mt: 5}}>
+          <Typography variant="overline" display="block" gutterBottom>
+           Meta tags
+          </Typography>
+
+              <Accordion>
+                <AccordionSummary
+                  expandIcon={<ExpandMoreIcon />}
+                  aria-controls="panel1-content"
+                  id="panel1-header"
+                >
+                   <CheckIcon color="success" sx={{mr:2}}/>
+                  Title
+                </AccordionSummary>
+                <AccordionDetails>
+                  {this.state.headTitleValue}
+                </AccordionDetails>
+              </Accordion>
+
+              <Accordion>
+                <AccordionSummary
+                  expandIcon={<ExpandMoreIcon />}
+                  aria-controls="panel1-content"
+                  id="panel1-header"
+                >
+                  <WarningIcon color="warning" sx={{mr:2}}/> Keywords
+                </AccordionSummary>
+                <AccordionDetails>
+                  {this.state.metaKeywordsValue}
+                </AccordionDetails>
+              </Accordion>
+
+              <Accordion>
+                <AccordionSummary
+                  expandIcon={<ExpandMoreIcon />}
+                  aria-controls="panel2-content"
+                  id="panel2-header"
+                >
+                  <ErrorIcon color="error" sx={{mr:2}}/> Description
+                </AccordionSummary>
+                <AccordionDetails>
+                  {this.state.metaDescriptionValue}
+                </AccordionDetails>
+              </Accordion>
+
+            </Box>
+          </div>
+
+
 
         </CustomTabPanel>
         <CustomTabPanel value={this.state.value} index={1}>
-          Item Two
         </CustomTabPanel>
         <CustomTabPanel value={this.state.value} index={2}>
-          Item Three
         </CustomTabPanel>
       </React.Fragment>
     )
