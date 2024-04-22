@@ -1,5 +1,5 @@
 body {
-  margin:;
+  margin:0;
 }
 
 .app-container {
@@ -17,7 +17,7 @@ body {
   display: flex;
   border-left: #e9e9e9 1x solid;
   flex-direction: row;
-  background: #fff;
+  background-color: #eaebed;
   z-index: 2;
 }
 
