@@ -1,28 +1,24 @@
 import * as React from 'react';
 
 import Tabs from '@mui/material/Tabs';
-import Stack from '@mui/material/Stack';
+//import Stack from '@mui/material/Stack';
 import Tab from '@mui/material/Tab';
-import Button from '@mui/material/Button';
+//import Button from '@mui/material/Button';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 import CardMedia from '@mui/material/CardMedia';
-//import fetchMeta from 'fetch-meta-tags'
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 import Chip from '@mui/material/Chip';
 
-import Accordion from '@mui/material/Accordion';
-//import AccordionActions from '@mui/material/AccordionActions';
-import AccordionSummary from '@mui/material/AccordionSummary';
-import AccordionDetails from '@mui/material/AccordionDetails';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import WordAnalyser from './WordAnalyser'
 
 import WarningIcon from '@mui/icons-material/Warning';
 import CheckIcon from '@mui/icons-material/Check';
 import ErrorIcon from '@mui/icons-material/Error';
 import AccordionItem from './AccordionItem';
-
+import KeywordsStats from './KeywordsStats';
+import About from './About';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -47,7 +43,12 @@ class CustomTabPanel extends React.Component <any, any> {
         {...other}
       >
         {value === index && (
-          <Box sx={{ p: 3 }}>
+          <Box sx={{ p: 2,
+            overflowY: "scroll",
+            display: "flex",
+            flexDirection: "column",
+
+          }}>
             {children}
           </Box>
         )}
@@ -79,9 +80,14 @@ type MyState = {
   metaKeywordsSituation: string,
   metaKeywordsAdvisory : string,
   wordsCount: number,
+  readingTime: string,
+  paragraphs: number,
+  sentences: number,
   wordsCountAdvisory: string,
   wordsCountSituation: string,
   twitterImage: string,
+  wordsCountObject: any,
+  keywordDensity: any,
 };
 
 export default class SidePanel extends React.Component <MyProps, MyState> {
@@ -100,10 +106,15 @@ export default class SidePanel extends React.Component <MyProps, MyState> {
       metaKeywordsValue: [],
       metaKeywordsSituation: '',
       metaKeywordsAdvisory: '',
+      readingTime: '',
+      paragraphs: 0,
+      sentences: 0,
       wordsCount: 0,
       wordsCountAdvisory: '',
       wordsCountSituation: '',
       twitterImage: "",
+      wordsCountObject: null,
+      keywordDensity: null,
     };
   }
 
@@ -225,14 +236,21 @@ export default class SidePanel extends React.Component <MyProps, MyState> {
     }
   }
 
-  checkMainContent(){
-    if (this.state.wordsCount === 0){
+  checkMainContent(contentText: string){
+
+    let counter = new WordAnalyser(contentText);
+    const words = counter.getWords();
+    this.setState( {
+      wordsCount: words,
+    });
+
+    if (words === 0){
       this.setState( {
         wordsCountSituation: 'error',
         wordsCountAdvisory: `Main content seems to have no text. For SEO having around ${this.props.word_count} words is recommended.`
       });
     }
-    else if( this.state.wordsCount + 100 < this.props.word_count){
+    else if(words + 100 < this.props.word_count){
       this.setState( {
         wordsCountSituation: 'warning',
         wordsCountAdvisory: `Too little words in main main content. For SEO having around ${this.props.word_count} words is recommended.`
@@ -244,6 +262,42 @@ export default class SidePanel extends React.Component <MyProps, MyState> {
         wordsCountAdvisory: `Enough words. Nice.`
       });
     }
+  }
+
+  checkContent(contentText: string){
+    let counter = new WordAnalyser(contentText);
+
+    const words = counter.getWords();
+    const filteredWordsCount = counter.getWords(true);
+//    const chars = counter.getCharacters();
+    const sentences = counter.getSentences();
+    const paragraphs = counter.getParagraphs();
+    const readingTime = counter.getReadingTime();
+//    const speakingTime = counter.getSpeakingTime();
+    const keywordDensity = counter.getKeywordDensity();
+    const wordsCountObject = counter.getWordCountObject();
+//
+//    console.log(words)
+//    console.log(keywordDensity);
+    /*
+    for (let word in keywordDensity) {
+        //console.log(word)
+      if (keywordDensity.hasOwnProperty(word)) {
+
+        let keydens:number = (keywordDensity[word]*100);
+        let debugdens = `${word} (${wordsCountObject[word]}) (${keydens}%)`
+
+        console.log(debugdens);
+      }
+    }
+    */
+    this.setState( {
+      readingTime: readingTime,
+      sentences: sentences,
+      paragraphs: paragraphs,
+      wordsCountObject: wordsCountObject,
+      keywordDensity: keywordDensity,
+    });
   }
 
   parseHTML(htmlString: string){
@@ -259,7 +313,9 @@ export default class SidePanel extends React.Component <MyProps, MyState> {
       keywords = [];
     }
 
-    let content = htmlDoc.querySelector<HTMLElement>(".content").innerText;
+    let contentText = htmlDoc.querySelector<HTMLElement>(".content").innerText;
+    this.checkContent(contentText);
+    this.checkMainContent(contentText);
 
 
     /*
@@ -284,14 +340,13 @@ export default class SidePanel extends React.Component <MyProps, MyState> {
 
     this.setState({
       headTitleValue: title,
-      wordsCount: content.length,
+      //wordsCount: content.length,
       metaDescriptionValue: description,
       metaKeywordsValue: keywords,
       twitterImage: twitterImage},()=>{
         this.checkKeyWords();
         this.checkMetaDescription();
         this.checkHeadTitle();
-        this.checkMainContent();
       });
   }
 
@@ -355,8 +410,8 @@ export default class SidePanel extends React.Component <MyProps, MyState> {
         <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
           <Tabs value={this.state.value} onChange={handleChange} aria-label="basic tabs example">
             <Tab label="Overview" {...this.a11yProps(0)} />
-            {/*<Tab label="Keywords" {...this.a11yProps(1)} />
-            <Tab label="Meta Tags" {...this.a11yProps(2)} />*/}
+            <Tab label="About" {...this.a11yProps(1)} />
+            {/* <Tab label="Meta Tags" {...this.a11yProps(2)} />*/}
           </Tabs>
         </Box>
         <CustomTabPanel value={this.state.value} index={0}>
@@ -405,26 +460,37 @@ export default class SidePanel extends React.Component <MyProps, MyState> {
               <AccordionItem
                 title="Title"
                 situation={this.state.headTitleSituation}
-                value={this.state.headTitleValue}
                 advisory={this.state.headTitleAdvisory}
                 count={"("+this.state.headTitleValue.length+")"}
-              />
+                hideDetails={false}
+              >
+                {this.state.headTitleValue}
+              </AccordionItem>
 
               <AccordionItem
                 title="Keywords"
                 situation={this.state.metaKeywordsSituation}
-                value={this.state.metaKeywordsValue}
                 advisory={this.state.metaKeywordsAdvisory}
                 count={"("+this.state.metaKeywordsValue.length+")"}
-              />
+                hideDetails={false}
+              >
+                {
+                  this.state.metaKeywordsValue.map((kw,i)=>{
+                    return (<Chip key={`kw${i}`} label={kw} sx={{mr:1, mb:1}} />)
+                  })
+                }
+              </AccordionItem>
 
               <AccordionItem
                 title="Description"
                 situation={this.state.metaDescriptionSituation}
-                value={this.state.metaDescriptionValue}
+                //value={this.state.metaDescriptionValue}
                 advisory={this.state.metaDescriptionAdvisory}
                 count={"("+this.state.metaDescriptionValue.length+")"}
-              />
+                hideDetails={false}
+              >
+                {this.state.metaDescriptionValue}
+              </AccordionItem>
             </Box>
 
             <Box sx={{ mt: 5}}>
@@ -435,16 +501,83 @@ export default class SidePanel extends React.Component <MyProps, MyState> {
               <AccordionItem
                 title="Words"
                 situation={this.state.wordsCountSituation}
-                value={""}
+                //value={""}
                 advisory={this.state.wordsCountAdvisory}
-                count={"("+this.state.wordsCount+")"}
-              />
+                count={"("+this.state.wordsCount+") "}
+                hideDetails={false}
+              >
+                <div>
+                Reading Time: {this.state.readingTime}<br/>
+                Sentences: {this.state.sentences}<br/>
+                Paragraphs: {this.state.paragraphs}<br/>
+                </div>
+
+              </AccordionItem>
+
+            </Box>
+
+            <Box sx={{ mt: 5}}>
+              <Typography variant="overline" display="block" gutterBottom>
+                Keywords
+              </Typography>
+
+              <AccordionItem
+                title="Keywords from Meta Tags"
+                hideDetails={false}
+              >
+                <KeywordsStats
+                  wordsCountObject={this.state.wordsCountObject}
+                  keywordDensity={this.state.keywordDensity}
+                  wordsOnly={
+                    this.state.metaKeywordsValue.map((kw)=>{
+                      return kw.trim().toLowerCase();
+
+                    })
+                  }
+                />
+
+              </AccordionItem>
+
+              <AccordionItem
+                title="Keywords from Title"
+                hideDetails={false}
+              >
+                <KeywordsStats
+                  wordsCountObject={this.state.wordsCountObject}
+                  keywordDensity={this.state.keywordDensity}
+                  wordsOnly={
+                    this.state.headTitleValue.split(" ").map((kw)=>{
+                      return kw.trim().toLowerCase();
+
+                    })
+                  }
+                />
+
+              </AccordionItem>
+
+
+              <AccordionItem
+                title="All Keywords"
+                hideDetails={false}
+              >
+                <KeywordsStats
+                  wordsCountObject={this.state.wordsCountObject}
+                  keywordDensity={this.state.keywordDensity}
+                />
+
+              </AccordionItem>
+
+
             </Box>
           </div>
 
+
         </CustomTabPanel>
+
         <CustomTabPanel value={this.state.value} index={1}>
+          <About />
         </CustomTabPanel>
+
         <CustomTabPanel value={this.state.value} index={2}>
         </CustomTabPanel>
       </React.Fragment>

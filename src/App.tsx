@@ -6,19 +6,10 @@ import CircularProgress from '@mui/material/CircularProgress';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import Link from '@mui/material/Link';
-
+import TextField from '@mui/material/TextField';
+import ArrowCircleRightIcon from '@mui/icons-material/ArrowCircleRight';
 import "./App.css";
 
-/*
-function Copyright() {
-  return (
-    <Typography variant="body2" color="text.secondary" align="center">
-      {'Copyright © Quiqr '}
-      {new Date().getFullYear()}.
-    </Typography>
-  );
-}
-*/
 
 type MyProps = {};
 type MyState = {
@@ -78,6 +69,26 @@ export default class App extends React.Component<MyProps, MyState> {
     }
   }
 
+  analyseNow(){
+    const searchParams = new URLSearchParams(window.location.search);
+    const url = searchParams.get("url");
+
+    if(url!==""){
+      this.setState({
+        url: url,
+        min_keywords: parseInt(searchParams.get("min_keywords")),
+        max_keywords: parseInt(searchParams.get("max_keywords")),
+        word_count: parseInt(searchParams.get("word_count")),
+        description_character_count: parseInt(searchParams.get("description_character_count")),
+        title_character_count: parseInt(searchParams.get("title_character_count")),
+        content_css_selector: searchParams.get("content_css_selector"),
+      });
+
+      this.canAccessIFrame(url);
+    }
+
+  }
+
   componentDidMount(){
     setTimeout(()=>{
       this.setState({loadTimer:true});
@@ -85,22 +96,7 @@ export default class App extends React.Component<MyProps, MyState> {
 
     window.addEventListener("mousemove", (e)=>{this.resize(e)});
     window.addEventListener("mouseup", ()=>{this.stopResizing()});
-
-    const searchParams = new URLSearchParams(window.location.search);
-    const url = searchParams.get("url");
-    if(url!==""){
-        this.setState({
-          url: url,
-          min_keywords: parseInt(searchParams.get("min_keywords")),
-          max_keywords: parseInt(searchParams.get("max_keywords")),
-          word_count: parseInt(searchParams.get("word_count")),
-          description_character_count: parseInt(searchParams.get("description_character_count")),
-          title_character_count: parseInt(searchParams.get("title_character_count")),
-          content_css_selector: searchParams.get("content_css_selector"),
-        });
-
-      this.canAccessIFrame(url);
-    }
+    this.analyseNow();
   }
 
   canAccessIFrame(url: string) {
@@ -169,6 +165,7 @@ export default class App extends React.Component<MyProps, MyState> {
     else{
 
       return (
+        <div>
         <Stack
           direction="row"
           justifyContent="flex-end"
@@ -180,14 +177,27 @@ export default class App extends React.Component<MyProps, MyState> {
             No valid URL to analyse. This Preview Check is specially made for Quiqr Websites.
 
             <p>
-            <Link href="https://quiqr.org" underline="hover">
-              Learn more about Quiqr.
-            </Link>
+              <Link href="https://quiqr.org" underline="hover">
+                Learn more about Quiqr.
+              </Link>
             </p>
 
           </Alert>
 
         </Stack>
+
+          {/*
+          <TextField
+            id="standard-name"
+            label="Name"
+            value={this.state.url}
+            InputProps={{endAdornment: <ArrowCircleRightIcon onClick={()=>{
+              window.location.replace(window.location.href+"?url=https://technative.eu&min_keywords=16&max_keywords=25&title_character_count=60&description_character_count=150&word_count=1500&content_css_selector=#content")
+              this.analyseNow();
+            }}/>}}
+          />
+          */}
+        </div>
       );
 
 
