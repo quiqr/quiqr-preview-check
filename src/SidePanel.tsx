@@ -1,14 +1,16 @@
 import * as React from 'react';
 
 import Tabs from '@mui/material/Tabs';
+import Stack from '@mui/material/Stack';
 import Tab from '@mui/material/Tab';
-//import Button from '@mui/material/Button';
+import Button from '@mui/material/Button';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 import CardMedia from '@mui/material/CardMedia';
 //import fetchMeta from 'fetch-meta-tags'
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
+import Chip from '@mui/material/Chip';
 
 import Accordion from '@mui/material/Accordion';
 //import AccordionActions from '@mui/material/AccordionActions';
@@ -19,6 +21,7 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import WarningIcon from '@mui/icons-material/Warning';
 import CheckIcon from '@mui/icons-material/Check';
 import ErrorIcon from '@mui/icons-material/Error';
+
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -51,13 +54,29 @@ class CustomTabPanel extends React.Component <any, any> {
     );
   }
 }
-type MyProps = { url: string};
+type MyProps = {
+  url: string
+  min_keywords: number,
+  max_keywords: number,
+  word_count: number,
+  description_character_count: number,
+  title_character_count: number,
+  content_css_selector: string,
+  timestamp: number,
+  setUrlFromIframe: any
+};
 type MyState = {
   url: string,
   value: number,
   headTitleValue: string,
+  headTitleSituation: string,
+  headTitleAdvisary: string,
   metaDescriptionValue: string,
-  metaKeywordsValue: string,
+  metaDescriptionSituation: string,
+  metaDescriptionAdvisary: string,
+  metaKeywordsValue: Array<string>,
+  metaKeywordsSituation: string,
+  metaKeywordsAdvisary : string,
   twitterImage: string,
 };
 
@@ -69,16 +88,37 @@ export default class SidePanel extends React.Component <MyProps, MyState> {
       value: 0,
       url: "",
       headTitleValue: "",
+      headTitleSituation: "",
+      headTitleAdvisary: "",
       metaDescriptionValue: "",
-      metaKeywordsValue: "",
+      metaDescriptionSituation: "",
+      metaDescriptionAdvisary: "",
+      metaKeywordsValue: [],
+      metaKeywordsSituation: '',
+      metaKeywordsAdvisary: '',
       twitterImage: "",
     };
+  }
+
+  componentDidMount(){
+
+    this.fetchMetaTags();
+    const socket = new WebSocket("ws://localhost:13131/livereload")
+
+    // Connection opened
+    socket.addEventListener("open", () => {
+      socket.send("Connection established")
+    });
+
+    // Listen for messages
+    socket.addEventListener("message", event => {
+      this.fetchMetaTags();
+    });
   }
 
   componentDidUpdate(){
     if (this.state.url !== this.props.url) {
       this.setState({ url: this.props.url });
-      console.log(this.props.url)
       this.fetchMetaTags();
     }
   }
@@ -95,6 +135,90 @@ export default class SidePanel extends React.Component <MyProps, MyState> {
     return '';
   }
 
+  checkHeadTitle(){
+    if (this.state.headTitleValue.length === 0){
+      this.setState( {
+        headTitleSituation: 'error',
+        headTitleAdvisary: `No title, A page should have a title.`
+      });
+    }
+    else if((this.state.headTitleValue.length - 10) > this.props.title_character_count){
+      this.setState( {
+        headTitleSituation: 'warning',
+        headTitleAdvisary: `Too long title. It should be around ${this.props.title_character_count} characters.`
+      });
+    }
+    else if( this.state.headTitleValue.length + 10 < this.props.title_character_count){
+      this.setState( {
+        headTitleSituation: 'warning',
+        headTitleAdvisary: `Too short title,  It should be around ${this.props.title_character_count} characters.`
+      });
+    }
+    else{
+      this.setState( {
+        headTitleSituation: '',
+        headTitleAdvisary: ``
+      });
+    }
+
+  }
+
+  checkMetaDescription(){
+    if (this.state.metaDescriptionValue.length === 0){
+      this.setState( {
+        metaDescriptionSituation: 'error',
+        metaDescriptionAdvisary: `No meta description, A page should have a description.`
+      });
+    }
+    else if((this.state.metaDescriptionValue.length - 10) > this.props.description_character_count){
+      this.setState( {
+        metaDescriptionSituation: 'warning',
+        metaDescriptionAdvisary: `Too long meta description. It should be around ${this.props.description_character_count} characters.`
+      });
+    }
+    else if( this.state.metaDescriptionValue.length + 10 < this.props.description_character_count){
+      this.setState( {
+        metaDescriptionSituation: 'warning',
+        metaDescriptionAdvisary: `Too short meta description,  It should be around ${this.props.description_character_count} characters.`
+      });
+    }
+    else{
+      this.setState( {
+        metaDescriptionSituation: '',
+        metaDescriptionAdvisary: ``
+      });
+    }
+
+  }
+
+  checkKeyWords(){
+    if (this.state.metaKeywordsValue.length === 0){
+      this.setState( {
+        metaKeywordsSituation: 'error',
+        metaKeywordsAdvisary: `No keywords, A page should have between ${this.props.min_keywords} and ${this.props.max_keywords} keywords`
+      });
+    }
+    else if(this.state.metaKeywordsValue.length > this.props.max_keywords){
+      this.setState( {
+        metaKeywordsSituation: 'warning',
+        metaKeywordsAdvisary: `Too many keywords. A page should have between ${this.props.min_keywords} and ${this.props.max_keywords} keywords`
+      });
+    }
+    else if( this.state.metaKeywordsValue.length < this.props.min_keywords){
+      this.setState( {
+        metaKeywordsSituation: 'warning',
+        metaKeywordsAdvisary: `Too little keywords, A page should have between ${this.props.min_keywords} and ${this.props.max_keywords} keywords`
+      });
+    }
+    else{
+      this.setState( {
+        metaKeywordsSituation: '',
+        metaKeywordsAdvisary: ``
+      });
+    }
+
+  }
+
   parseHTML(htmlString: string){
 
     let parser = new DOMParser();
@@ -103,13 +227,19 @@ export default class SidePanel extends React.Component <MyProps, MyState> {
 
     let title = htmlDoc.getElementsByTagName("title")[0].innerHTML;
     let description = this.getMeta(htmlDoc, 'description');
-    let keywords = this.getMeta(htmlDoc, 'keywords');
+    let keywords: Array<string> = this.getMeta(htmlDoc, 'keywords').replace("[","").replace("]","").split(',');
+    if(keywords.length ===1 && keywords[0]===""){
+      keywords = [];
+    }
 
+    /*
     let twitterCard = this.getMeta(htmlDoc, 'twitter:card');
     let twitterTitle = this.getMeta(htmlDoc, 'twitter:title');
     let twitterDescription = this.getMeta(htmlDoc, 'twitter:description');
+    */
     let twitterImage = this.getMeta(htmlDoc, 'twitter:image');
 
+    /*
     let ogType = this.getMeta(htmlDoc, 'og:type', 'property');
     let ogTitle = this.getMeta(htmlDoc, 'og:title', 'property');
     let ogDescription = this.getMeta(htmlDoc, 'og:description', 'property');
@@ -120,20 +250,19 @@ export default class SidePanel extends React.Component <MyProps, MyState> {
     let itempropName = this.getMeta(htmlDoc, 'name', 'itemprop');
     let itempropImage = this.getMeta(htmlDoc, 'image', 'itemprop');
     let itempropDescription = this.getMeta(htmlDoc, 'description', 'itemprop');
+    */
 
-    console.log(title);
-    console.log(description);
-
-    this.setState({headTitleValue: title});
-    this.setState({metaDescriptionValue: description});
-    this.setState({metaKeywordsValue: keywords});
-    this.setState({twitterImage: twitterImage});
+    this.setState({headTitleValue: title,
+    metaDescriptionValue: description,
+    metaKeywordsValue: keywords,
+    twitterImage: twitterImage},()=>{
+        this.checkKeyWords();
+        this.checkMetaDescription();
+        this.checkHeadTitle();
+      });
   }
 
   fetchMetaTags(){
-    //const [headTitleValue, setHeadTitleValue] = useState("");
-    console.log(this.props.url)
-
     fetch(this.props.url)
       .then((response) => response.text())
       .then((html) => {
@@ -148,6 +277,23 @@ export default class SidePanel extends React.Component <MyProps, MyState> {
       'aria-controls': `simple-tabpanel-${index}`,
     };
   }
+
+  getSituationIcon(situation:string){
+    if(situation==='warning'){
+      return <WarningIcon color="warning" sx={{mr:2}}/>
+    }
+    else if(situation==='error'){
+      return <ErrorIcon color="error" sx={{mr:2}}/>
+    }
+    else if(situation==='success'){
+      return <CheckIcon color="success" sx={{mr:2}}/>
+    }
+    else{
+      return null;
+
+    }
+
+  }
   render(){
 
     const handleChange = (_: React.SyntheticEvent, newValue: number) => {
@@ -156,6 +302,22 @@ export default class SidePanel extends React.Component <MyProps, MyState> {
 
     return (
       <React.Fragment>
+
+        {/*
+        <Stack
+          direction="row"
+          justifyContent="flex-end"
+          alignItems="flex-start"
+          spacing={2}
+          sx={{m:2}}
+        >
+          <Button variant="outlined" size="small" onClick={()=>{
+            this.props.setUrlFromIframe();
+          }} >
+            set url
+          </Button>
+        </Stack>
+        */}
 
         <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
           <Tabs value={this.state.value} onChange={handleChange} aria-label="basic tabs example">
@@ -185,7 +347,7 @@ export default class SidePanel extends React.Component <MyProps, MyState> {
               component="img"
               sx={{ width: 151 }}
               image={this.state.twitterImage}
-              alt="Live from space album cover"
+              alt={this.state.twitterImage}
             />
             <Box sx={{ display: 'flex', flexDirection: 'column' }}>
               <CardContent sx={{ flex: '1 0 auto' }}>
@@ -214,24 +376,16 @@ export default class SidePanel extends React.Component <MyProps, MyState> {
                   aria-controls="panel1-content"
                   id="panel1-header"
                 >
-                   <CheckIcon color="success" sx={{mr:2}}/>
-                  Title
+                  {this.getSituationIcon(this.state.headTitleSituation)}
+                  Title ({this.state.headTitleValue.length})
                 </AccordionSummary>
                 <AccordionDetails>
                   {this.state.headTitleValue}
-                </AccordionDetails>
-              </Accordion>
 
-              <Accordion>
-                <AccordionSummary
-                  expandIcon={<ExpandMoreIcon />}
-                  aria-controls="panel1-content"
-                  id="panel1-header"
-                >
-                  <WarningIcon color="warning" sx={{mr:2}}/> Keywords
-                </AccordionSummary>
-                <AccordionDetails>
-                  {this.state.metaKeywordsValue}
+                  <Typography sx={{mt:2}} variant="body2" gutterBottom>
+                    {this.state.headTitleAdvisary}
+                  </Typography>
+
                 </AccordionDetails>
               </Accordion>
 
@@ -239,19 +393,45 @@ export default class SidePanel extends React.Component <MyProps, MyState> {
                 <AccordionSummary
                   expandIcon={<ExpandMoreIcon />}
                   aria-controls="panel2-content"
+                  id="panel1-header"
+                >
+                  {this.getSituationIcon(this.state.metaKeywordsSituation)}
+                  Keywords ({this.state.metaKeywordsValue.length})
+
+                </AccordionSummary>
+                <AccordionDetails>
+                  {this.state.metaKeywordsValue.map((kw,i)=>{
+                    return (<Chip label={kw} key={i} variant="outlined" />)
+                  })}
+
+                  <Typography sx={{mt:2}} variant="body2" gutterBottom>
+                    {this.state.metaKeywordsAdvisary}
+                  </Typography>
+                </AccordionDetails>
+              </Accordion>
+
+              <Accordion>
+                <AccordionSummary
+                  expandIcon={<ExpandMoreIcon />}
+                  aria-controls="panel3-content"
                   id="panel2-header"
                 >
-                  <ErrorIcon color="error" sx={{mr:2}}/> Description
+                  {this.getSituationIcon(this.state.metaDescriptionSituation)}
+                  Description ({this.state.metaDescriptionValue.length})
+
                 </AccordionSummary>
                 <AccordionDetails>
                   {this.state.metaDescriptionValue}
+
+                  <Typography sx={{mt:2}} variant="body2" gutterBottom>
+                    {this.state.metaDescriptionAdvisary}
+                  </Typography>
+
                 </AccordionDetails>
               </Accordion>
 
             </Box>
           </div>
-
-
 
         </CustomTabPanel>
         <CustomTabPanel value={this.state.value} index={1}>
