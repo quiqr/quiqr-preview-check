@@ -21,6 +21,7 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import WarningIcon from '@mui/icons-material/Warning';
 import CheckIcon from '@mui/icons-material/Check';
 import ErrorIcon from '@mui/icons-material/Error';
+import AccordionItem from './AccordionItem';
 
 
 interface TabPanelProps {
@@ -70,13 +71,16 @@ type MyState = {
   value: number,
   headTitleValue: string,
   headTitleSituation: string,
-  headTitleAdvisary: string,
+  headTitleAdvisory: string,
   metaDescriptionValue: string,
   metaDescriptionSituation: string,
-  metaDescriptionAdvisary: string,
+  metaDescriptionAdvisory: string,
   metaKeywordsValue: Array<string>,
   metaKeywordsSituation: string,
-  metaKeywordsAdvisary : string,
+  metaKeywordsAdvisory : string,
+  wordsCount: number,
+  wordsCountAdvisory: string,
+  wordsCountSituation: string,
   twitterImage: string,
 };
 
@@ -89,13 +93,16 @@ export default class SidePanel extends React.Component <MyProps, MyState> {
       url: "",
       headTitleValue: "",
       headTitleSituation: "",
-      headTitleAdvisary: "",
+      headTitleAdvisory: "",
       metaDescriptionValue: "",
       metaDescriptionSituation: "",
-      metaDescriptionAdvisary: "",
+      metaDescriptionAdvisory: "",
       metaKeywordsValue: [],
       metaKeywordsSituation: '',
-      metaKeywordsAdvisary: '',
+      metaKeywordsAdvisory: '',
+      wordsCount: 0,
+      wordsCountAdvisory: '',
+      wordsCountSituation: '',
       twitterImage: "",
     };
   }
@@ -139,25 +146,25 @@ export default class SidePanel extends React.Component <MyProps, MyState> {
     if (this.state.headTitleValue.length === 0){
       this.setState( {
         headTitleSituation: 'error',
-        headTitleAdvisary: `No title, A page should have a title.`
+        headTitleAdvisory: `No title, A page should have a title.`
       });
     }
     else if((this.state.headTitleValue.length - 10) > this.props.title_character_count){
       this.setState( {
         headTitleSituation: 'warning',
-        headTitleAdvisary: `Too long title. It should be around ${this.props.title_character_count} characters.`
+        headTitleAdvisory: `Too long title. It should be around ${this.props.title_character_count} characters.`
       });
     }
     else if( this.state.headTitleValue.length + 10 < this.props.title_character_count){
       this.setState( {
         headTitleSituation: 'warning',
-        headTitleAdvisary: `Too short title,  It should be around ${this.props.title_character_count} characters.`
+        headTitleAdvisory: `Too short title,  It should be around ${this.props.title_character_count} characters.`
       });
     }
     else{
       this.setState( {
-        headTitleSituation: '',
-        headTitleAdvisary: ``
+        headTitleSituation: 'success',
+        headTitleAdvisory: ``
       });
     }
 
@@ -167,25 +174,25 @@ export default class SidePanel extends React.Component <MyProps, MyState> {
     if (this.state.metaDescriptionValue.length === 0){
       this.setState( {
         metaDescriptionSituation: 'error',
-        metaDescriptionAdvisary: `No meta description, A page should have a description.`
+        metaDescriptionAdvisory: `No meta description, A page should have a description.`
       });
     }
     else if((this.state.metaDescriptionValue.length - 10) > this.props.description_character_count){
       this.setState( {
         metaDescriptionSituation: 'warning',
-        metaDescriptionAdvisary: `Too long meta description. It should be around ${this.props.description_character_count} characters.`
+        metaDescriptionAdvisory: `Too long meta description. It should be around ${this.props.description_character_count} characters.`
       });
     }
     else if( this.state.metaDescriptionValue.length + 10 < this.props.description_character_count){
       this.setState( {
         metaDescriptionSituation: 'warning',
-        metaDescriptionAdvisary: `Too short meta description,  It should be around ${this.props.description_character_count} characters.`
+        metaDescriptionAdvisory: `Too short meta description,  It should be around ${this.props.description_character_count} characters.`
       });
     }
     else{
       this.setState( {
-        metaDescriptionSituation: '',
-        metaDescriptionAdvisary: ``
+        metaDescriptionSituation: 'success',
+        metaDescriptionAdvisory: ``
       });
     }
 
@@ -195,28 +202,48 @@ export default class SidePanel extends React.Component <MyProps, MyState> {
     if (this.state.metaKeywordsValue.length === 0){
       this.setState( {
         metaKeywordsSituation: 'error',
-        metaKeywordsAdvisary: `No keywords, A page should have between ${this.props.min_keywords} and ${this.props.max_keywords} keywords`
+        metaKeywordsAdvisory: `No keywords, A page should have between ${this.props.min_keywords} and ${this.props.max_keywords} keywords`
       });
     }
     else if(this.state.metaKeywordsValue.length > this.props.max_keywords){
       this.setState( {
         metaKeywordsSituation: 'warning',
-        metaKeywordsAdvisary: `Too many keywords. A page should have between ${this.props.min_keywords} and ${this.props.max_keywords} keywords`
+        metaKeywordsAdvisory: `Too many keywords. A page should have between ${this.props.min_keywords} and ${this.props.max_keywords} keywords`
       });
     }
     else if( this.state.metaKeywordsValue.length < this.props.min_keywords){
       this.setState( {
         metaKeywordsSituation: 'warning',
-        metaKeywordsAdvisary: `Too little keywords, A page should have between ${this.props.min_keywords} and ${this.props.max_keywords} keywords`
+        metaKeywordsAdvisory: `Too little keywords, A page should have between ${this.props.min_keywords} and ${this.props.max_keywords} keywords`
       });
     }
     else{
       this.setState( {
-        metaKeywordsSituation: '',
-        metaKeywordsAdvisary: ``
+        metaKeywordsSituation: 'success',
+        metaKeywordsAdvisory: ``
       });
     }
+  }
 
+  checkMainContent(){
+    if (this.state.wordsCount === 0){
+      this.setState( {
+        wordsCountSituation: 'error',
+        wordsCountAdvisory: `Main content seems to have no text. For SEO having around ${this.props.word_count} words is recommended.`
+      });
+    }
+    else if( this.state.wordsCount + 100 < this.props.word_count){
+      this.setState( {
+        wordsCountSituation: 'warning',
+        wordsCountAdvisory: `Too little words in main main content. For SEO having around ${this.props.word_count} words is recommended.`
+      });
+    }
+    else{
+      this.setState( {
+        wordsCountSituation: 'success',
+        wordsCountAdvisory: `Enough words. Nice.`
+      });
+    }
   }
 
   parseHTML(htmlString: string){
@@ -231,6 +258,9 @@ export default class SidePanel extends React.Component <MyProps, MyState> {
     if(keywords.length ===1 && keywords[0]===""){
       keywords = [];
     }
+
+    let content = htmlDoc.querySelector<HTMLElement>(".content").innerText;
+
 
     /*
     let twitterCard = this.getMeta(htmlDoc, 'twitter:card');
@@ -252,13 +282,16 @@ export default class SidePanel extends React.Component <MyProps, MyState> {
     let itempropDescription = this.getMeta(htmlDoc, 'description', 'itemprop');
     */
 
-    this.setState({headTitleValue: title,
-    metaDescriptionValue: description,
-    metaKeywordsValue: keywords,
-    twitterImage: twitterImage},()=>{
+    this.setState({
+      headTitleValue: title,
+      wordsCount: content.length,
+      metaDescriptionValue: description,
+      metaKeywordsValue: keywords,
+      twitterImage: twitterImage},()=>{
         this.checkKeyWords();
         this.checkMetaDescription();
         this.checkHeadTitle();
+        this.checkMainContent();
       });
   }
 
@@ -329,7 +362,7 @@ export default class SidePanel extends React.Component <MyProps, MyState> {
         <CustomTabPanel value={this.state.value} index={0}>
 
           <Typography variant="overline" display="block" gutterBottom>
-           Preview
+            Preview
           </Typography>
 
           {/*
@@ -364,72 +397,48 @@ export default class SidePanel extends React.Component <MyProps, MyState> {
           </Card>
 
           <div>
+            <Box sx={{ mt: 5}}>
+              <Typography variant="overline" display="block" gutterBottom>
+                Meta tags
+              </Typography>
+
+              <AccordionItem
+                title="Title"
+                situation={this.state.headTitleSituation}
+                value={this.state.headTitleValue}
+                advisory={this.state.headTitleAdvisory}
+                count={"("+this.state.headTitleValue.length+")"}
+              />
+
+              <AccordionItem
+                title="Keywords"
+                situation={this.state.metaKeywordsSituation}
+                value={this.state.metaKeywordsValue}
+                advisory={this.state.metaKeywordsAdvisory}
+                count={"("+this.state.metaKeywordsValue.length+")"}
+              />
+
+              <AccordionItem
+                title="Description"
+                situation={this.state.metaDescriptionSituation}
+                value={this.state.metaDescriptionValue}
+                advisory={this.state.metaDescriptionAdvisory}
+                count={"("+this.state.metaDescriptionValue.length+")"}
+              />
+            </Box>
 
             <Box sx={{ mt: 5}}>
-          <Typography variant="overline" display="block" gutterBottom>
-           Meta tags
-          </Typography>
+              <Typography variant="overline" display="block" gutterBottom>
+                Main Content
+              </Typography>
 
-              <Accordion>
-                <AccordionSummary
-                  expandIcon={<ExpandMoreIcon />}
-                  aria-controls="panel1-content"
-                  id="panel1-header"
-                >
-                  {this.getSituationIcon(this.state.headTitleSituation)}
-                  Title ({this.state.headTitleValue.length})
-                </AccordionSummary>
-                <AccordionDetails>
-                  {this.state.headTitleValue}
-
-                  <Typography sx={{mt:2}} variant="body2" gutterBottom>
-                    {this.state.headTitleAdvisary}
-                  </Typography>
-
-                </AccordionDetails>
-              </Accordion>
-
-              <Accordion>
-                <AccordionSummary
-                  expandIcon={<ExpandMoreIcon />}
-                  aria-controls="panel2-content"
-                  id="panel1-header"
-                >
-                  {this.getSituationIcon(this.state.metaKeywordsSituation)}
-                  Keywords ({this.state.metaKeywordsValue.length})
-
-                </AccordionSummary>
-                <AccordionDetails>
-                  {this.state.metaKeywordsValue.map((kw,i)=>{
-                    return (<Chip label={kw} key={i} variant="outlined" />)
-                  })}
-
-                  <Typography sx={{mt:2}} variant="body2" gutterBottom>
-                    {this.state.metaKeywordsAdvisary}
-                  </Typography>
-                </AccordionDetails>
-              </Accordion>
-
-              <Accordion>
-                <AccordionSummary
-                  expandIcon={<ExpandMoreIcon />}
-                  aria-controls="panel3-content"
-                  id="panel2-header"
-                >
-                  {this.getSituationIcon(this.state.metaDescriptionSituation)}
-                  Description ({this.state.metaDescriptionValue.length})
-
-                </AccordionSummary>
-                <AccordionDetails>
-                  {this.state.metaDescriptionValue}
-
-                  <Typography sx={{mt:2}} variant="body2" gutterBottom>
-                    {this.state.metaDescriptionAdvisary}
-                  </Typography>
-
-                </AccordionDetails>
-              </Accordion>
-
+              <AccordionItem
+                title="Words"
+                situation={this.state.wordsCountSituation}
+                value={""}
+                advisory={this.state.wordsCountAdvisory}
+                count={"("+this.state.wordsCount+")"}
+              />
             </Box>
           </div>
 
