@@ -4,6 +4,7 @@ import SidePanel from './SidePanel'
 import Alert from '@mui/material/Alert';
 import CircularProgress from '@mui/material/CircularProgress';
 import Stack from '@mui/material/Stack';
+import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Link from '@mui/material/Link';
 import TextField from '@mui/material/TextField';
@@ -225,9 +226,9 @@ export default class App extends React.Component<MyProps, MyState> {
           <div className="app-sidebar-resizer" onMouseDown={()=>{this.startResizing()}} >
             <div className="resize-panel" style={{ display: this.state.resizeDisplay }}></div>
           </div>
-          <div className="app-sidebar-content">
+          <Box className="app-sidebar-content">
             { ( this.state.loadTimer ? sidePanel : <CircularProgress sx={{m:5}}/> )  }
-          </div>
+          </Box>
         </div>
       </div>
     );

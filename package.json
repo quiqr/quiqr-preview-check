@@ -11,6 +11,7 @@
     "@types/react-dom": "latest",
     "fetch-meta-tags": "^1.0.12",
     "iframe-resizer-react": "^1.1.0",
+    "keyword-extractor": "^0.0.28",
     "react": "latest",
     "react-dom": "latest",
     "react-scripts": "latest",

@@ -18,44 +18,10 @@ import CheckIcon from '@mui/icons-material/Check';
 import ErrorIcon from '@mui/icons-material/Error';
 import AccordionItem from './AccordionItem';
 import KeywordsStats from './KeywordsStats';
+import CustomTabPanel from './CustomTabPanel';
+
 import About from './About';
 
-interface TabPanelProps {
-  children?: React.ReactNode;
-  index: number;
-  value: number;
-}
-
-class CustomTabPanel extends React.Component <any, any> {
-  constructor(props:TabPanelProps){
-    super(props);
-  }
-
-  render(){
-
-    const { children, value, index, ...other } = this.props;
-    return (
-      <div
-        role="tabpanel"
-        hidden={value !== index}
-        id={`simple-tabpanel-${index}`}
-        aria-labelledby={`simple-tab-${index}`}
-        {...other}
-      >
-        {value === index && (
-          <Box sx={{ p: 2,
-            overflowY: "scroll",
-            display: "flex",
-            flexDirection: "column",
-
-          }}>
-            {children}
-          </Box>
-        )}
-      </div>
-    );
-  }
-}
 type MyProps = {
   url: string
   min_keywords: number,
@@ -86,8 +52,10 @@ type MyState = {
   wordsCountAdvisory: string,
   wordsCountSituation: string,
   twitterImage: string,
-  wordsCountObject: any,
+  keywordsCountObject: any,
   keywordDensity: any,
+  wordsCountObject: any,
+  wordDensity: any,
 };
 
 export default class SidePanel extends React.Component <MyProps, MyState> {
@@ -113,8 +81,10 @@ export default class SidePanel extends React.Component <MyProps, MyState> {
       wordsCountAdvisory: '',
       wordsCountSituation: '',
       twitterImage: "",
-      wordsCountObject: null,
+      keywordsCountObject: null,
       keywordDensity: null,
+      wordsCountObject: null,
+      wordDensity: null,
     };
   }
 
@@ -129,7 +99,7 @@ export default class SidePanel extends React.Component <MyProps, MyState> {
     });
 
     // Listen for messages
-    socket.addEventListener("message", event => {
+    socket.addEventListener("message", () => {
       this.fetchMetaTags();
     });
   }
@@ -268,35 +238,23 @@ export default class SidePanel extends React.Component <MyProps, MyState> {
     let counter = new WordAnalyser(contentText);
 
     const words = counter.getWords();
-    const filteredWordsCount = counter.getWords(true);
-//    const chars = counter.getCharacters();
+    //const filteredWordsCount = counter.getWords(true);
     const sentences = counter.getSentences();
     const paragraphs = counter.getParagraphs();
     const readingTime = counter.getReadingTime();
-//    const speakingTime = counter.getSpeakingTime();
     const keywordDensity = counter.getKeywordDensity();
+    const keywordsCountObject = counter.getKeywordCountObject();
     const wordsCountObject = counter.getWordCountObject();
-//
-//    console.log(words)
-//    console.log(keywordDensity);
-    /*
-    for (let word in keywordDensity) {
-        //console.log(word)
-      if (keywordDensity.hasOwnProperty(word)) {
+    const wordDensity = counter.getWordDensity();
 
-        let keydens:number = (keywordDensity[word]*100);
-        let debugdens = `${word} (${wordsCountObject[word]}) (${keydens}%)`
-
-        console.log(debugdens);
-      }
-    }
-    */
     this.setState( {
       readingTime: readingTime,
       sentences: sentences,
       paragraphs: paragraphs,
-      wordsCountObject: wordsCountObject,
+      keywordsCountObject: keywordsCountObject,
       keywordDensity: keywordDensity,
+      wordsCountObject: wordsCountObject,
+      wordDensity: wordDensity,
     });
   }
 
@@ -516,7 +474,7 @@ export default class SidePanel extends React.Component <MyProps, MyState> {
 
             </Box>
 
-            <Box sx={{ mt: 5}}>
+              <Box sx={{ mt: 5}}>
               <Typography variant="overline" display="block" gutterBottom>
                 Keywords
               </Typography>
@@ -527,7 +485,7 @@ export default class SidePanel extends React.Component <MyProps, MyState> {
               >
                 <KeywordsStats
                   wordsCountObject={this.state.wordsCountObject}
-                  keywordDensity={this.state.keywordDensity}
+                  keywordDensity={this.state.wordDensity}
                   wordsOnly={
                     this.state.metaKeywordsValue.map((kw)=>{
                       return kw.trim().toLowerCase();
@@ -544,6 +502,58 @@ export default class SidePanel extends React.Component <MyProps, MyState> {
               >
                 <KeywordsStats
                   wordsCountObject={this.state.wordsCountObject}
+                  keywordDensity={this.state.wordDensity}
+                  wordsOnly={
+                    this.state.headTitleValue.split(" ").map((kw)=>{
+                      return kw.trim().toLowerCase();
+
+                    })
+                  }
+                />
+
+              </AccordionItem>
+
+              <AccordionItem
+                title="All single keywords"
+                hideDetails={false}
+              >
+                <KeywordsStats
+                  wordsCountObject={this.state.wordsCountObject}
+                  keywordDensity={this.state.wordDensity}
+                />
+
+              </AccordionItem>
+
+            </Box>
+
+            <Box sx={{ mt: 5}}>
+              <Typography variant="overline" display="block" gutterBottom>
+                Keyword phrases
+              </Typography>
+
+              <AccordionItem
+                title="Keywords from Meta Tags"
+                hideDetails={false}
+              >
+                <KeywordsStats
+                  wordsCountObject={this.state.keywordsCountObject}
+                  keywordDensity={this.state.keywordDensity}
+                  wordsOnly={
+                    this.state.metaKeywordsValue.map((kw)=>{
+                      return kw.trim().toLowerCase();
+
+                    })
+                  }
+                />
+
+              </AccordionItem>
+
+              <AccordionItem
+                title="Keywords from Title"
+                hideDetails={false}
+              >
+                <KeywordsStats
+                  wordsCountObject={this.state.keywordsCountObject}
                   keywordDensity={this.state.keywordDensity}
                   wordsOnly={
                     this.state.headTitleValue.split(" ").map((kw)=>{
@@ -555,13 +565,12 @@ export default class SidePanel extends React.Component <MyProps, MyState> {
 
               </AccordionItem>
 
-
-              <AccordionItem
-                title="All Keywords"
+             <AccordionItem
+                title="All Keyword phrases"
                 hideDetails={false}
               >
                 <KeywordsStats
-                  wordsCountObject={this.state.wordsCountObject}
+                  wordsCountObject={this.state.keywordsCountObject}
                   keywordDensity={this.state.keywordDensity}
                 />
 

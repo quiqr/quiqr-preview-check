@@ -22,102 +22,162 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 import StopWords from './StopwordsEnglish.json'
+import KeywordExtractor from 'keyword-extractor'
 
 export default class WordCounter {
 
-    static stopWords = StopWords;
-    text: string;
+  static stopWords = StopWords;
+  text: string;
 
-    constructor(text:string) {
-        this.text = text;
+  constructor(text:string) {
+    this.text = text;
+  }
+
+  getWords(useStopWords:boolean = false) {
+    let words:Array<string> = this.text.toLowerCase().match(/\b(\w+)\b/g);
+
+    // If stopWords parameter is true, ignore stop words
+    if (useStopWords) {
+      // Filter out the stop words
+      words = words.filter(word => !WordCounter.stopWords.includes(word));
     }
 
-    getWords(useStopWords:boolean = false) {
-        let words:Array<string> = this.text.toLowerCase().match(/\b(\w+)\b/g);
+    return words ? words.length : 0;
+  }
 
-        // If stopWords parameter is true, ignore stop words
-        if (useStopWords) {
-            // Filter out the stop words
-            words = words.filter(word => !WordCounter.stopWords.includes(word));
+  getKeyWords(min_words:number=1, max_words:number=3) {
+    const result: Array<string> = KeywordExtractor.extract(this.text,{
+      language:"english",
+      remove_digits: true,
+      return_changed_case:true,
+      return_chained_words:true,
+      remove_duplicates: false
+    });
+
+    const filtered_result = result.filter((word)=> (word.split(" ").length <= max_words && word.split(" ").length >= min_words))
+
+
+    return filtered_result;
+  }
+
+  getCharacters() {
+    return this.text.length;
+  }
+
+  getSentences() {
+    let sentences = this.text.match(/[^\.!\?]+[\.!\?]+/g);
+    return sentences ? sentences.length : 0;
+  }
+
+  getParagraphs() {
+    let paragraphs = this.text.split(/\n+/g);
+    return paragraphs ? paragraphs.length : 0;
+  }
+
+  formatTime(timeInMinutes:number) {
+    const timeInSeconds = timeInMinutes * 60;
+    const minutes = Math.floor(timeInSeconds / 60);
+    const seconds = Math.floor(timeInSeconds % 60);
+    return minutes >= 1 ? `${minutes}m ${seconds}s` : `${seconds}s`;
+  }
+
+  getReadingTime() {
+    // Average reading speed is about 200 words per minute.
+    const timeInMinutes = this.getWords() / 200;
+    return this.formatTime(timeInMinutes);
+  }
+
+  getSpeakingTime() {
+    // Average speaking speed is about 150 words per minute.
+    const timeInMinutes = this.getWords() / 150;
+    return this.formatTime(timeInMinutes);
+  }
+
+  getKeywordCountObject(){
+    //let wordsAll:Array<string> = this.text.toLowerCase().match(/\b(\w+)\b/g);
+    let words = this.getKeyWords();
+    let wordCount = {};
+    if (words) {
+      words.forEach( (word:string) => {
+        if (wordCount[word]) {
+          wordCount[word]++;
+        } else {
+          wordCount[word] = 1;
         }
-
-        return words ? words.length : 0;
+      });
     }
 
-    getCharacters() {
-        return this.text.length;
-    }
+    return wordCount
+  }
 
-    getSentences() {
-        let sentences = this.text.match(/[^\.!\?]+[\.!\?]+/g);
-        return sentences ? sentences.length : 0;
+  getWordCountObject(){
+    let wordsAll:Array<string> = this.text.toLowerCase().match(/\b(\w+)\b/g);
+    let words = wordsAll.filter(word => !WordCounter.stopWords.includes(word));
+    let wordCount = {};
+    if (words) {
+      words.forEach( (word:string) => {
+        if (wordCount[word]) {
+          wordCount[word]++;
+        } else {
+          wordCount[word] = 1;
+        }
+      });
     }
+    return wordCount
+  }
 
-    getParagraphs() {
-        let paragraphs = this.text.split(/\n+/g);
-        return paragraphs ? paragraphs.length : 0;
-    }
+  getWordDensity() {
+    // Extract words from the text, lower case them, and filter out stop words
+    let wordsAll:Array<string> = this.text.toLowerCase().match(/\b(\w+)\b/g);
+    let words = wordsAll.filter(word => !WordCounter.stopWords.includes(word));
 
-    formatTime(timeInMinutes:number) {
-        const timeInSeconds = timeInMinutes * 60;
-        const minutes = Math.floor(timeInSeconds / 60);
-        const seconds = Math.floor(timeInSeconds % 60);
-        return minutes >= 1 ? `${minutes}m ${seconds}s` : `${seconds}s`;
-    }
+    let wordCount = this.getWordCountObject();
 
-    getReadingTime() {
-        // Average reading speed is about 200 words per minute.
-        const timeInMinutes = this.getWords() / 200;
-        return this.formatTime(timeInMinutes);
-    }
+    let keywordDensity = {};
 
-    getSpeakingTime() {
-        // Average speaking speed is about 150 words per minute.
-        const timeInMinutes = this.getWords() / 150;
-        return this.formatTime(timeInMinutes);
-    }
-
-    getWordCountObject(){
-      let wordsAll:Array<string> = this.text.toLowerCase().match(/\b(\w+)\b/g);
-      let words = wordsAll.filter(word => !WordCounter.stopWords.includes(word));
-      let wordCount = {};
-      if (words) {
-        words.forEach( (word:string) => {
-          if (wordCount[word]) {
-            wordCount[word]++;
-          } else {
-            wordCount[word] = 1;
-          }
-        });
+    for (let word in wordCount) {
+      // Avoid showing 'undefined' in the results
+      if (wordCount[word] !== undefined && wordCount[word] >= words.length * 0.001) {
+        keywordDensity[word] = wordCount[word] / wordsAll.length;
       }
-      return wordCount
     }
 
-    getKeywordDensity() {
-        // Extract words from the text, lower case them, and filter out stop words
-        let wordsAll:Array<string> = this.text.toLowerCase().match(/\b(\w+)\b/g);
-        let words = wordsAll.filter(word => !WordCounter.stopWords.includes(word));
+    // Sort keywords by density from highest to lowest
+    let sortedKeywordDensity = Object.keys(keywordDensity).sort((a, b) => keywordDensity[b] - keywordDensity[a]);
 
-        let wordCount = this.getWordCountObject();
+    let sortedDensity = {};
+    sortedKeywordDensity.forEach(key => {
+      sortedDensity[key] = keywordDensity[key];
+    });
 
-        let keywordDensity = {};
+    return sortedDensity;
+  }
 
-        for (let word in wordCount) {
-            // Avoid showing 'undefined' in the results
-            if (wordCount[word] !== undefined && wordCount[word] >= words.length * 0.001) {
-                keywordDensity[word] = wordCount[word] / wordsAll.length;
-            }
-        }
+  getKeywordDensity() {
+    // Extract words from the text, lower case them, and filter out stop words
+    let wordsAll:Array<string> = this.text.toLowerCase().match(/\b(\w+)\b/g);
+    let words = this.getKeyWords();
 
-        // Sort keywords by density from highest to lowest
-        let sortedKeywordDensity = Object.keys(keywordDensity).sort((a, b) => keywordDensity[b] - keywordDensity[a]);
+    let wordCount = this.getKeywordCountObject();
 
-        let sortedDensity = {};
-        sortedKeywordDensity.forEach(key => {
-            sortedDensity[key] = keywordDensity[key];
-        });
+    let keywordDensity = {};
 
-        return sortedDensity;
+    for (let word in wordCount) {
+      // Avoid showing 'undefined' in the results
+      if (wordCount[word] !== undefined && wordCount[word] >= words.length * 0.001) {
+        keywordDensity[word] = wordCount[word] / wordsAll.length;
+      }
     }
+
+    // Sort keywords by density from highest to lowest
+    let sortedKeywordDensity = Object.keys(keywordDensity).sort((a, b) => keywordDensity[b] - keywordDensity[a]);
+
+    let sortedDensity = {};
+    sortedKeywordDensity.forEach(key => {
+      sortedDensity[key] = keywordDensity[key];
+    });
+
+    return sortedDensity;
+  }
 }
 
